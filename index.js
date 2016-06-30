@@ -19,58 +19,62 @@ var numUsers = 0;
 io.on('connection', function (socket) {
     var addedUser = false;
 
+    socket.on('subscribe', function (room) {
+        console.log('joining room', room);
+        socket.join(room);
+    });
+
     // when the client emits 'new message', this listens and executes
     socket.on('new message', function (data) {
         // we tell the client to execute 'new message'
-        socket.broadcast.emit('new message', {
+        socket.broadcast.to(data.room).emit('new message', {
             name: socket.name,
-            message: data
+            message: data.message
         });
-        console.log(data);
     });
 
     // when the client emits 'add user', this listens and executes
-    socket.on('add user', function (name) {
+    socket.on('add user', function (data) {
         if (addedUser) return;
 
         // we store the name in the socket session for this client
-        socket.name = name;
+        socket.name = data.name;
         ++numUsers;
         addedUser = true;
         socket.emit('login', {
             numUsers: numUsers
         });
         // echo globally (all clients) that a person has connected
-        //socket.broadcast.emit('user joined', {
-        //  name: socket.name,
-        //  numUsers: numUsers
-        //});
+        // socket.broadcast.to(data.room).emit('user joined', {
+        //     name: socket.name,
+        //     numUsers: numUsers
+        // });
     });
 
     // when the client emits 'typing', we broadcast it to others
-    socket.on('typing', function () {
-        socket.broadcast.emit('typing', {
+    socket.on('typing', function (room) {
+        socket.broadcast.to(room).emit('typing', {
             name: socket.name
         });
     });
 
     // when the client emits 'stop typing', we broadcast it to others
-    socket.on('stop typing', function () {
-        socket.broadcast.emit('stop typing', {
+    socket.on('stop typing', function (room) {
+        socket.broadcast.to(room).emit('stop typing', {
             name: socket.name
         });
     });
 
     // when the user disconnects.. perform this
-    socket.on('disconnect', function () {
+    socket.on('disconnect', function (room) {
         if (addedUser) {
             --numUsers;
 
             // echo globally that this client has left
-            //socket.broadcast.emit('user left', {
-            //  name: socket.name,
-            //  numUsers: numUsers
-            //});
+            // socket.broadcast.to(room).emit('user left', {
+            //     name: socket.name,
+            //     numUsers: numUsers
+            // });
         }
     });
 });
