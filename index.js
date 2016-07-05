@@ -17,6 +17,39 @@ app.use(express.static(__dirname + '/public'));
 var numUsers = 0;
 
 io.on('connection', function (socket) {
+    //notifications sockets
+
+    socket.on('subscribe notifications', function (user_id) {
+        console.log('connected to user id', user_id);
+        socket.join(user_id);
+    });
+
+    socket.on('new message notif', function (data) {
+        socket.broadcast.to(data.user_id).emit('new message notif', {
+            sender_id: data.sender_id,
+            name: data.name,
+            picture: data.picture
+        });
+    });
+
+    socket.on('new match notif', function (data) {
+        socket.broadcast.to(data.user_id).emit('new match notif', {
+            user_id: data.user_id,
+            name: data.name,
+            picture: data.picture
+        });
+    });
+
+    socket.on('new visitor notif', function (data) {
+        socket.broadcast.to(data.user_id).emit('new visitor notif', {
+            user_id: data.user_id,
+            name: data.name,
+            picture: data.picture
+        });
+    });
+    
+    
+    //chat sockets
     var addedUser = false;
 
     socket.on('subscribe', function (room) {
